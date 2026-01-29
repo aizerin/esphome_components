@@ -8,12 +8,19 @@ namespace dht {
 static const char *const TAG = "dht";
 
 void DHT::setup() {
-  this->t_pin_->digital_write(true);
+//   this->t_pin_->digital_write(true);
+//   this->t_pin_->setup();
+// #ifdef USE_ESP32
+//   this->t_pin_->pin_mode(this->t_pin_->get_flags() | gpio::FLAG_OUTPUT | gpio::FLAG_OPEN_DRAIN);
+// #endif
+//   this->t_pin_->digital_write(true);
+
   this->t_pin_->setup();
-#ifdef USE_ESP32
-  this->t_pin_->pin_mode(this->t_pin_->get_flags() | gpio::FLAG_OUTPUT | gpio::FLAG_OPEN_DRAIN);
-#endif
-  this->t_pin_->digital_write(true);
+  this->t_pin_->pin_mode(gpio::FLAG_INPUT);
+
+  this->t_pin_b_->setup();
+  this->t_pin_b_->digital_write(true);
+  this->t_pin_b_->pin_mode(gpio::FLAG_OUTPUT);
 }
 
 void DHT::dump_config() {
@@ -25,6 +32,7 @@ void DHT::dump_config() {
                 this->model_ == DHT_MODEL_DHT11 ? "DHT11" : "DHT22 or equivalent",
                 ONOFF(this->t_pin_->get_flags() & gpio::FLAG_PULLUP));
   LOG_PIN("  Pin: ", this->t_pin_);
+  LOG_PIN("  PinB: ", this->t_pin_b_);
   LOG_UPDATE_INTERVAL(this);
   LOG_SENSOR("  ", "Temperature", this->temperature_sensor_);
   LOG_SENSOR("  ", "Humidity", this->humidity_sensor_);
@@ -78,10 +86,12 @@ bool HOT IRAM_ATTR DHT::read_sensor_(float *temperature, float *humidity, bool r
   int8_t i = 0;
   uint8_t data[5] = {0, 0, 0, 0, 0};
 
-#ifndef USE_ESP32
-  this->pin_.pin_mode(gpio::FLAG_OUTPUT);
-#endif
-  this->pin_.digital_write(false);
+// #ifndef USE_ESP32
+//   this->pin_.pin_mode(gpio::FLAG_OUTPUT);
+// #endif
+//   this->pin_.digital_write(false);
+
+  this->t_pin_b_->digital_write(false);
 
   if (this->model_ == DHT_MODEL_DHT11) {
     delayMicroseconds(18000);
@@ -93,11 +103,13 @@ bool HOT IRAM_ATTR DHT::read_sensor_(float *temperature, float *humidity, bool r
     delayMicroseconds(1000);
   }
 
-#ifdef USE_ESP32
-  this->pin_.digital_write(true);
-#else
-  this->pin_.pin_mode(this->t_pin_->get_flags());
-#endif
+// #ifdef USE_ESP32
+//   this->pin_.digital_write(true);
+// #else
+//   this->pin_.pin_mode(this->t_pin_->get_flags());
+// #endif
+//
+  this->t_pin_b_->digital_write(true);
 
   {
     InterruptLock lock;

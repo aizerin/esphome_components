@@ -7,6 +7,7 @@ from esphome.const import (
     CONF_ID,
     CONF_MODEL,
     CONF_PIN,
+    CONF_PIN_B,
     CONF_TEMPERATURE,
     DEVICE_CLASS_HUMIDITY,
     DEVICE_CLASS_TEMPERATURE,
@@ -33,7 +34,9 @@ DHT = dht_ns.class_("DHT", cg.PollingComponent)
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(DHT),
-        cv.Required(CONF_PIN): pins.internal_gpio_input_pullup_pin_schema,
+        # cv.Required(CONF_PIN): pins.internal_gpio_input_pullup_pin_schema,
+        cv.Required(CONF_PIN): pins.internal_gpio_input_pin_schema,
+        cv.Required(CONF_PIN_B): pins.internal_gpio_output_pin_schema,
         cv.Optional(CONF_TEMPERATURE): sensor.sensor_schema(
             unit_of_measurement=UNIT_CELSIUS,
             accuracy_decimals=1,
@@ -59,6 +62,8 @@ async def to_code(config):
 
     pin = await gpio_pin_expression(config[CONF_PIN])
     cg.add(var.set_pin(pin))
+    pin_b = await gpio_pin_expression(config[CONF_PIN_B])
+    cg.add(var.set_pin_b(pin_b))
 
     if CONF_TEMPERATURE in config:
         sens = await sensor.new_sensor(config[CONF_TEMPERATURE])
